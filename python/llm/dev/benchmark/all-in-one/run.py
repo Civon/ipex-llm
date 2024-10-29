@@ -1321,11 +1321,15 @@ def run_transformer_int4_fp16_gpu_win(repo_id,
                 input_str = get_continuation_input_str(in_len, tokenizer)
                 # As different tokenizer has different encodings,
                 # slice the input_ids to ensure the prompt length is required length.
-                input_ids = tokenizer.encode(input_str, return_tensors="pt")
-                input_ids = input_ids[:, :in_len]
-                true_str = tokenizer.batch_decode(input_ids)[0]
-                input_list = [true_str] * batch_size
+                # input_ids = tokenizer.encode(input_str, return_tensors="pt")
+                # input_ids = input_ids[:, :in_len]
+                # true_str = tokenizer.batch_decode(input_ids)[0]
+                # input_list = [true_str] * batch_size
+                # input_ids = tokenizer(input_list, return_tensors="pt").input_ids.to('xpu')
+                input_list = [input_str] * batch_size
                 input_ids = tokenizer(input_list, return_tensors="pt").input_ids.to('xpu')
+                input_ids = input_ids[:, :in_len]
+
                 actual_in_len = input_ids.shape[1]
                 result[in_out] = []
                 for i in range(num_trials + warm_up):
