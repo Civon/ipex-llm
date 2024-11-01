@@ -640,16 +640,9 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && (inputs.checkout-ref != 'main') }}
         shell: bash
         run: |
-          if [ ${{ matrix.platform }} == "perf-igpu" ]; then
-            sed -i 's/"bigdl-core-xe-21==" + CORE_XE_VERSION/"bigdl-core-xe-21"/g' python/llm/setup.py
-            sed -i 's/"bigdl-core-xe-batch-21==" + CORE_XE_VERSION/"bigdl-core-xe-batch-21"/g' python/llm/setup.py
-            sed -i 's/"bigdl-core-xe-addons-21==" + CORE_XE_VERSION/"bigdl-core-xe-addons-21"/g' python/llm/setup.py
-          fi
-          if [ ${{ matrix.platform }} == "perf-dgpu" ]; then
-            sed -i 's/"bigdl-core-xe-23==" + CORE_XE_VERSION/"bigdl-core-xe-23"/g' python/llm/setup.py
-            sed -i 's/"bigdl-core-xe-batch-23==" + CORE_XE_VERSION/"bigdl-core-xe-batch-23"/g' python/llm/setup.py
-            sed -i 's/"bigdl-core-xe-addons-23==" + CORE_XE_VERSION/"bigdl-core-xe-addons-23"/g' python/llm/setup.py
-          fi
+          sed -i 's/"bigdl-core-xe-23==" + CORE_XE_VERSION/"bigdl-core-xe-23"/g' python/llm/setup.py
+          sed -i 's/"bigdl-core-xe-batch-23==" + CORE_XE_VERSION/"bigdl-core-xe-batch-23"/g' python/llm/setup.py
+          sed -i 's/"bigdl-core-xe-addons-23==" + CORE_XE_VERSION/"bigdl-core-xe-addons-23"/g' python/llm/setup.py
 
       - name: Install ipex-llm and other related packages (install from source)
         if: ${{ github.event_name == 'workflow_dispatch' && (inputs.checkout-ref != 'main') }}
@@ -668,12 +661,8 @@ jobs:
           if not exist dist\ipex_llm*.whl (exit /b 1)
           for %%i in (dist\ipex_llm*.whl) do set whl_name=%%i
 
-          if "${{ matrix.platform }}"=="perf-igpu" (
-            pip install --pre --upgrade %whl_name%[xpu] --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/cn/
-          )
-          if "${{ matrix.platform }}"=="perf-dgpu" (
-            pip install --pre --upgrade %whl_name%[xpu_lnl] --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/lnl/cn/
-          )
+          pip install --pre --upgrade %whl_name%[xpu_lnl] --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/lnl/cn/
+
           if %ERRORLEVEL% neq 0 (exit /b 1)
           pip list
 
@@ -699,12 +688,8 @@ jobs:
           pip install --upgrade omegaconf pandas
           pip install --upgrade tiktoken einops transformers_stream_generator matplotlib
 
-          if "${{ matrix.platform }}"=="perf-igpu" (
-            pip install --pre --upgrade ipex-llm[xpu]==%TEST_VERSION% --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/cn/
-          )
-          if "${{ matrix.platform }}"=="perf-dgpu" (
-            pip install --pre --upgrade ipex-llm[xpu_lnl]==%TEST_VERSION% --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/lnl/cn/
-          )
+          pip install --pre --upgrade ipex-llm[xpu_lnl]==%TEST_VERSION% --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/lnl/cn/
+
           pip show ipex-llm | findstr %TEST_VERSION%
           if %ERRORLEVEL% neq 0 (
             echo "Did not install ipex-llm with excepted version %TEST_VERSION%"
@@ -2082,27 +2067,27 @@ jobs:
       #     call conda deactivate
 
       # TODO: avoid duplicated code
-      - name: Upload results to ftp
-        if: ${{ always() }}
-        shell: cmd
-        run: |
-          cd %CSV_SAVE_PATH%
-          IF "${{ github.event_name }}"=="schedule" (
-            IF "${{ matrix.platform }}"=="perf-igpu" (
-              for %%f in (*.html) do (
-                  curl -T "%%f" %FTP_IGPU_NIGHTLY_PERF_PATH%
-              )
-            )
-          )
-          IF "${{ github.event_name }}"=="workflow_dispatch" (
-            IF "${{ inputs.checkout-ref }}"=="main" (
-              IF "${{ matrix.platform }}"=="perf-igpu" (
-                for %%f in (*.html) do (
-                    curl -T "%%f" %FTP_IGPU_NIGHTLY_PERF_PATH%
-                )
-              )
-            )
-          )
+      # - name: Upload results to ftp
+      #   if: ${{ always() }}
+      #   shell: cmd
+      #   run: |
+      #     cd %CSV_SAVE_PATH%
+      #     IF "${{ github.event_name }}"=="schedule" (
+      #       IF "${{ matrix.platform }}"=="perf-igpu" (
+      #         for %%f in (*.html) do (
+      #             curl -T "%%f" %FTP_IGPU_NIGHTLY_PERF_PATH%
+      #         )
+      #       )
+      #     )
+      #     IF "${{ github.event_name }}"=="workflow_dispatch" (
+      #       IF "${{ inputs.checkout-ref }}"=="main" (
+      #         IF "${{ matrix.platform }}"=="perf-igpu" (
+      #           for %%f in (*.html) do (
+      #               curl -T "%%f" %FTP_IGPU_NIGHTLY_PERF_PATH%
+      #           )
+      #         )
+      #       )
+      #     )
       # for test on machine when encountering error
       # - name: Remove conda env
       #   if: ${{ always() }}
